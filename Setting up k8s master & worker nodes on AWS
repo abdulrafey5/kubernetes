@@ -1,0 +1,53 @@
+# Kubernetes-lab #
+"Run these commands on a master node and parallely on all worker nodes". 
+
+  
+## Update and install https package
+sudo su
+apt-get update
+### https needed for intra-cluster communication
+apt-get install apt-transport-https 
+
+  
+## Checking docker installation and starting it
+apt install docker.io -y
+docker --version
+systemctl start docker
+systemctl enable docker
+
+## Set up open GPG key
+sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add 
+
+## Edit sources.list file and add debian link for installing kubernetes-xenial package
+nano /etc/apt/sources.list.d/kubernetes.list
+deb http://apt.kubernetes.io/ kubernetes-xenial main
+
+## Updating and installing all k8s packages
+apt-get update
+apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+
+
+"Now we will perform Bootstrapping in MASTER node"
+
+## Initialize k8s control-plane
+kubeadm init
+ 
+
+## Copy these commands to run in nodes later
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml  
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/k8s-manifests/kube-flannel-rbac.yml
+
+
+"Now configure the WORKER nodes by running command provided by MASTER"
+
+## Paste this long command in each of the worker nodes  
+kubeadm join 172.31.6.165:6443 --token kl9fhu.co2n90v3rxtqllrs --discovery-token-ca-cert-hash sha256:b0f8003d23dbf445e0132a53d7aa1922bdef8d553d9eca06e65c928322b3e7c0
+
+## Go to master and run this command for confirming nodes successful connection with master
+kubectl get nodes  
+
+  
